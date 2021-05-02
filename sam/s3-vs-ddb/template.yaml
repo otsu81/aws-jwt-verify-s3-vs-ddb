@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  s3-vs-ddb
+
+Globals:
+  Function:
+    Timeout: 20
+
+Parameters:
+  Region:
+    Type: String
+    Description: The region where the bucket and table is located
+    Default: eu-west-1
+  DdbTable:
+    Type: String
+    Description: The ARN of the DynamoDB table containing public keys
+    Default: table-name
+  BucketName:
+    Type: String
+    Description: S3 bucket containing public keys
+    Default: bucket-name
+
+Resources:
+  IamRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Description: The IAM role used by the Lambda function. Allows reading DynamoDB and S3.
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                Service:
+                  - "lambda.amazonaws.com"
+              Action:
+                - "sts:AssumeRole"
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+          - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+          - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
+
+  s3JWTVerifier:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3Verifier/
+      Handler: s3verify.lambdaHandler
+      Runtime: nodejs14.x
+      MemorySize: 128
+      Environment:
+        Variables:
+          BUCKET: !Ref BucketName
+          REGION: !Ref Region
+      Role: !GetAtt IamRole.Arn
+
+  DDBJWTVerifier:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ddbVerifier/
+      Handler: ddbVerify.lambdaHandler
+      Runtime: nodejs14.x
+      MemorySize: 128
+      Environment:
+        Variables:
+          TABLE: !Ref DdbTable
+          REGION: !Ref Region
+      Role: !GetAtt IamRole.Arn
+
+Outputs:
+  s3JWTVerifierFunction:
+    Description: The function verifying JWTs using S3 as store for public keys
+    Value: !GetAtt s3JWTVerifier.Arn
+  DdbJWTVerifierFunction:
+    Description: The function verifying JWTs using DynamoDB as store for public keys
+    Value: !GetAtt s3JWTVerifier.Arn
+  LambdaIAMRole:
+    Description: IAM Role created for JWT Verifier functions
+    Value: !GetAtt IamRole.Arn

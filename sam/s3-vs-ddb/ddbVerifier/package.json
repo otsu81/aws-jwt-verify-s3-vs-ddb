@@ -1,0 +1,16 @@
+{
+    "name": "s3_verify_jwt",
+    "version": "0.0.1",
+    "description": "jwt verifier fetchking public keys from S3",
+    "main": "s3verify.js",
+    "license": "MIT",
+    "dependencies": {
+        "@aws-sdk/client-dynamodb": "^3.14.0",
+        "jsonwebtoken": "^8.5.1"
+    },
+    "devDependencies": {
+        "aws-sdk": "^2.815.0",
+        "chai": "^4.2.0",
+        "mocha": "^8.2.1"
+    }
+}
