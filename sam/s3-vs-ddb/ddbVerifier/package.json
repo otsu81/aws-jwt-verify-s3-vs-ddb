@@ -1,8 +1,8 @@
 {
     "name": "s3_verify_jwt",
     "version": "0.0.1",
-    "description": "jwt verifier fetchking public keys from S3",
-    "main": "s3verify.js",
+    "description": "jwt verifier fetchking public keys from DynamoDB",
+    "main": "ddbVerify.js",
     "license": "MIT",
     "dependencies": {
         "@aws-sdk/client-dynamodb": "^3.14.0",
