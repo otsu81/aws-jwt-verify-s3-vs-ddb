@@ -1,5 +1,7 @@
 # Loading public keys from S3 or DynamoDB - which is faster
 
+Spoiler alert: S3 invocation in an 128MB Lambda is about 40% slower than DynamoDB. If I've made some gross mistakes or missed some cool optimization, please make a pull request and I'll rerun.
+
 * Generate keys with `make_keys.sh` to folders `public_keys/` and `private_keys/`
 * Generate a JSON file with signed JWTs using `sign.js`
 * Load DynamoDB table with `ddbloader.js`, example usage: `node ddbLoader myTable eu-west-1`
