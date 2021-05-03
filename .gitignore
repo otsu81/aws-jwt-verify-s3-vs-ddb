@@ -1,2 +1,6 @@
 node_modules/*
 samconfig.toml
+private_keys/
+public_keys/
+!private_keys/GENERATED_PRIVATE_KEYS_GO_HERE
+!public_keys/GENERATED_PUBLIC_KEYS_GO_HERE
