@@ -1,6 +1,15 @@
 # Loading public keys from S3 or DynamoDB - which is faster
 
-TL;DR: Loading the same string object stored in an S3 object is roughly 40% slower than loading the same string from a DynamoDB table.
+TL;DR: Loading the same string object stored in an S3 object is roughly 40% slower than loading the same string from a DynamoDB table. For this simplistic case, storing keys in S3 is about 240% more expensive than DynamoDB.
+
+It's not a huge shocker that DynamoDB is more suitable for storing and retrieving simple strings than S3. Our simplistic case of just using S3 as a lookup table make the conditions for S3 as favorable as possible (if there was a bigger file needing to be parsed to find a specific key load times for the bigger file would be much worse compared to DynamoDB). So, if the execution difference is in the 10-15ms range you'd be tempted to think it doesn't matter in the long run. But since AWS [changed the billing for Lambda to millisecond billing](https://aws.amazon.com/blogs/aws/new-for-aws-lambda-1ms-billing-granularity-adds-cost-savings/), the implication is that S3 would be roughly 40% more expensive than using DynamoDB. For millions of invocatiotions a a day, that will have huge pricing implications.
+
+Then what about storage and retrieval cost? DynamoDB is famous for being expensive at large scale, but for a simplistic case like this which is mostly eventually consistent reads DynamoDB actually comes out ahead. If we use the following examples:
+* 10,000,000 public keys would consume about 5GB of storage
+* For the sake of argument, assume we have 100,000,000 pulls of the public key to the lambda function
+* We are in EU-WEST-1
+
+According to the [pricing calculator](https://calculator.aws/), for S3 Standard storage we would end up at roughly $41/mo. For DynamoDB, with on-demand capacity we would end up with roughly $17/mo.
 
 If I've made some gross mistakes or missed some cool optimization, please make a pull request and I'll rerun.
 
@@ -19,18 +28,6 @@ Here's the flow to perform a benchmark:
 * Sync `public_keys/` directory to S3 using AWS CLI, e.g. `aws s3 sync public_keys/ s3://my-bucket`
 * Deploy `sam/s3-vs-ddb/` using AWS SAM, e.g. `cd sam/s3-vs-ddb/ && sam deploy --guided`. Note the names of the two functions deployed from SAM.
 * Generate load to benchmark using `5_loadtester [function-name]` as provided by SAM
-
-
-## Discussion
-
-It's not a huge shocker that DynamoDB is more suitable for storing and retrieving simple strings than S3. Our simplistic case of just using S3 as a lookup table make the conditions for S3 as favorable as possible (if there was a bigger file needing to be parsed to find a specific key load times for the bigger file would be much worse compared to DynamoDB). So, if the execution difference is in the 10-15ms range you'd be tempted to think it doesn't matter in the long run. But since AWS [changed the billing for Lambda to millisecond billing](https://aws.amazon.com/blogs/aws/new-for-aws-lambda-1ms-billing-granularity-adds-cost-savings/), the implication is that S3 would be roughly 40% more expensive than using DynamoDB. For millions of invocatiotions a a day, that will have huge pricing implications.
-
-Then what about storage and retrieval cost? DynamoDB is famous for being expensive at large scale, but for a simplistic case like this which is mostly eventually consistent reads DynamoDB actually comes out ahead. If we use the following examples:
-* 10,000,000 public keys would consume about 5GB of storage
-* For the sake of argument, assume we have 100,000,000 pulls of the public key to the lambda function
-* We are in EU-WEST-1
-
-According to the pricing calculator, for S3 Standard storage we would end up at roughly $40/mo. For DynamoDB, with on-demand capacity we would end up with roughly $17/mo.
 
 ## Example measurement
 
